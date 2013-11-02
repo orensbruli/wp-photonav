@@ -38,7 +38,9 @@ $.fn.photoNav = function(settings) {
 		popup : 'none',
 		animate : '0',
 		position : 'center',
-		label : 'none'
+		label : 'none',
+		full_view : '1'
+
 	};
 
 	function PhotoNav(elem) {
@@ -47,6 +49,8 @@ $.fn.photoNav = function(settings) {
 
 		var inline = elem.children('.container');
 		var image = inline.find('.image');
+		var is_out=true;
+		var old_img_height=image.css('height');
 
 		this.getImageWidth = function() {
 			return image[0].scrollWidth;
@@ -57,14 +61,43 @@ $.fn.photoNav = function(settings) {
 
 		this.initMove = function(container) {
 			var content = container.find('.content');
-			container.mousemove(function(event) {
-				var offset = $(this).offset();
-				var curX = (event.pageX - offset.left) * (1 - self.getImageWidth() / this.offsetWidth);
-				var curY = (event.pageY - offset.top) * (1 - self.getImageHeight() / this.offsetHeight);
-				content.stop(); // stop animation
-				content.css('left', curX > 0 ? 0 : curX);
-				content.css('top', curY > 0 ? 0 : curY);
+			var old_container_height = container.css('height');
+			container.mousemove(function(event)
+			{
+				if(!is_out)
+			    {
+					var offset = $(this).offset();
+					var curX = (event.pageX - offset.left) * (1 - self.getImageWidth() / this.offsetWidth);
+					var curY = (event.pageY - offset.top) * (1 - self.getImageHeight() / this.offsetHeight);
+					content.stop(); // stop animation
+					content.css('left', curX > 0 ? 0 : curX);
+					content.css('top', curY > 0 ? 0 : curY);
+				}
 			});
+			container.mouseenter(function(event) {
+				if(config.full_view == '1')
+				{
+					image.css('width', 'auto');
+					if(parseInt(old_img_height)<parseInt(old_container_height))
+					{
+						container.css('height', old_container_height);
+					}	
+				}
+				is_out=false;
+			});
+			container.mouseleave(function(event){
+				if(config.full_view == '1')
+				{
+					//old_container_height = container.css('height');
+					image.css('width', container.css('width'));
+					old_img_height=image.css('height');
+					container.css('height', image.css('height'));
+					content.css('left', 0);
+					content.css('top', 0);
+				}
+				is_out=true;
+			});
+
 		};
 
 		this.initDrag = function(container) {
@@ -165,7 +198,8 @@ $.fn.photoNav = function(settings) {
 						if (config.mode == 'drag360') animate_loop($(this)); 
 					});
 				});
-			}			
+			}
+			container.trigger( "mouseleave" );
 		};
 
 		// Calls the appropriate init method above depending on the mode parameter.
